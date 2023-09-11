@@ -1,0 +1,46 @@
+aug_rot_range: &id002 !!python/tuple
+- -60
+- 60
+batch_size: 16
+epochs: 10
+experiment_name: test_training
+learning_rate: 0.001
+loss_function:
+  SSIM_Loss: !!python/object/apply:numpy.core.multiarray.scalar
+  - &id001 !!python/object/apply:numpy.dtype
+    args:
+    - f8
+    - false
+    - true
+    state: !!python/tuple
+    - 3
+    - <
+    - null
+    - null
+    - null
+    - -1
+    - -1
+    - 0
+  - !!binary |
+    AAAAAAAA4D8=
+  l1_loss: !!python/object/apply:numpy.core.multiarray.scalar
+  - *id001
+  - !!binary |
+    AAAAAAAA4D8=
+model_class: SWINIR
+patch_size: &id003 !!python/tuple
+- 48
+- 48
+train_process_lst:
+- !!python/object:src.image_processing.AugmentRandomRotation
+  _apply_before_ksp: true
+  augmentation_range: *id002
+  prob_apply: 0.5
+- !!python/object:src.image_processing.AugmentHorizonalFlip
+  _apply_before_ksp: true
+  prob_apply: 0.5
+- !!python/object:src.image_processing.PatchPairedImage
+  _apply_before_ksp: true
+  max_attempts: 80
+  min_patch_value: 0.05
+  patch_size: *id003
