@@ -78,7 +78,6 @@ def sample_weight_ssim(img_input, img_target):
     img_input = img_input * 255
     img_target = img_target * 255 
     SSIM = _ssim(img_input, img_target)
-    print(SSIM)
     
     if SSIM > 0.95:
         patch_sample_weight = 1
@@ -138,7 +137,6 @@ class ClipData(BasePreprocess):
         )
         a_min=np.percentile(input_mtx, self.clip_values),
         a_max=np.percentile(input_mtx, 100 - self.clip_values),
-        #print(a_min, a_max)
         return rslt_mtx
 
     def __call__(self, *args):
@@ -260,7 +258,6 @@ class NormalizePostProcess(NormalizeData):
             rslt_mtx[0:-1,:,:] = (input_mtx[0:-1,:,:]- self.min_value) / (self.max_value - self.min_value)
             rslt_mtx[-1,:,:] = input_mtx[-1,:,:]
         
-        #print(self.min_value, self.max_value)
         return rslt_mtx
 
     def post_process(self, input_mtx, *args, **kwargs):
@@ -705,19 +702,3 @@ class AddGaussianKspNoise(Augmentation):
 
         return ksp_data
 
-# sqy define for histogram based normalization
-def HistogramNormalization(input_img, target_img, mask=None,
-                          i_min = 1, i_max=99, l_percentile = 10, u_percentile=90, step=10):
-    
-    # match the histogram of the input image to the target to remove the bias
-    percs = np.concatenate(([i_min], np.arange(l_percentile, u_percentile, step),[i_max]))
-    # [1,10,20,30,40,50,60,70,80,90,99]
-    input_img_masked = input_img[mask>0]
-    target_img_masked = target_img[mask>0]
-    
-    target_landmarks = [np.amin(target_img)] + list(np.percentile(target_img_masked, percs)) + [np.amax(target_img)]
-    input_landmarks  = [np.amin(input_img)] + list(np.percentile(input_img_masked, percs))+  [np.amax(input_img)]
-    f = interp1d(input_landmarks, target_landmarks)
-    input_img = np.clip(input_img,a_min = np.percentile(input_img,i_min), a_max = np.percentile(input_img,i_max))
-    # apply transformation to the input_img
-    return f(input_img)

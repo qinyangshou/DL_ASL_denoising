@@ -200,8 +200,6 @@ class MultipleLOFT4DMRDataset_Volume(Dataset):
     def __init__(self, dataset_lst, probs=None):
         # save data
         self.dataset_lst = dataset_lst
-
-        # set id_slice_lst, may need to check it
         self.id_time_lst = [x.id_time_lst for x in dataset_lst]
         self.id_time_lst = [x for y in self.id_time_lst for x in y]
         
@@ -262,8 +260,7 @@ class LOFT4DMRPredDataset_Volume(Dataset):
         # resize the image to the fixed size
         self.pxl_mtx = zoom(self.pxl_mtx, (self.img_shape[0]/self.pxl_mtx.shape[0], self.img_shape[1]/self.pxl_mtx.shape[1], self.img_shape[2]/self.pxl_mtx.shape[2]))
         self.pxl_mtx = np.expand_dims(self.pxl_mtx, axis=0) # for the channel dimension
-        self.pxl_mtx = np.expand_dims(self.pxl_mtx, axis=0) # for the batch dimension
-        # shape of 1, img_x, img_y, img_z       
+        self.pxl_mtx = np.expand_dims(self.pxl_mtx, axis=0) # for the batch dimension 
 
     def _preprocess_data(self, input_mtx):
         """ preprocesses dicom data
@@ -290,48 +287,5 @@ class LOFT4DMRPredDataset_Volume(Dataset):
         """
         # get index of image and then
         input_mtx = self.pxl_mtx[indx]
-
-        # expand dims for channel
-        #input_mtx = np.expand_dims(input_mtx, 0)
-
-        # must return tuple
-        #print(np.min(input_mtx), np.max(input_mtx))
         return input_mtx,
 
-# below are class instance test
-'''
-from matplotlib import pyplot as plt
-UH2_data_path = '/ifs/loni/groups/loft/KWIA_DL/data_hdf5_csv/KWIA_DL_UH2_M0.hdf5'
-UH2_data_conn = h5py.File(UH2_data_path,"r")
-UH2_csv_path = '/ifs/loni/groups/loft/KWIA_DL/data_hdf5_csv/KWIA_DL_UH2.csv'
-UH2_csv = pd.read_csv(UH2_csv_path)
-UH2_data_splits = {
-    "train": UH2_csv[UH2_csv["train_val_test"] == "TRAIN"]["subject_ID"].tolist(),
-    "validation": UH2_csv[UH2_csv["train_val_test"] == "VALID"]["subject_ID"].tolist(),
-}
-UH2_data = LOFT4DMRData3D(UH2_data_conn, UH2_data_splits, prop_cull=[0.1,0.1],slice_axis=-2, time_axis=-1, remove_spike=True)
-id_lst =  UH2_csv[UH2_csv["train_val_test"] == "TRAIN"]["subject_ID"].tolist()
-# print(id_lst)
-# print(UH2_data._get_id_time_lst(id_lst))
-print(len(UH2_data._get_id_time_lst(id_lst)))
-from image_processing import \
-    AugmentRandomRotation, AugmentHorizonalFlip
-
-AUG_ROT_RANGE = (-60, 60)
-train_preproc_lst = [
-    AugmentRandomRotation(AUG_ROT_RANGE),
-    AugmentHorizonalFlip(),        
-]
-UH2_train_data = UH2_data.generate_dataset("train",preproc_lst=train_preproc_lst, ksp_sim_lst = [], input_name = "input/data_input", 
-                                           target_name = "target_ave/dset_target_ave",mask_name = None,  global_norm = True, input_shape = [96,96,48])
-
-
-input_img, target_img = UH2_train_data.__getitem__(120)
-plt.rcParams['figure.figsize'] = [10, 10]
-plt.figure()
-plt.subplot(211)
-plt.imshow(input_img[:,:,:,12].squeeze())
-plt.subplot(212)
-plt.imshow(target_img[:,:,:,12].squeeze())
-print('ok')
-'''

@@ -22,8 +22,6 @@ class SSIM_Loss(SSIM):
         :params: target: torch tensor
         :returns: calculated SSIM loss
         """
-        #print("in SSIM loss")
-        #print(type(1 - super(SSIM_Loss, self).forward(input, target)))
         if target.ndim==4:
             return 1 - super(SSIM_Loss, self).forward(input, target)
         elif target.ndim == 5:
@@ -41,8 +39,6 @@ class SSIM_Loss_range(SSIM):
         :params: target: torch tensor
         :returns: calculated SSIM loss
         """
-        #print("in SSIM loss")
-        #print(type(1 - super(SSIM_Loss, self).forward(input, target)))
         return 1 - ssim(input, target, data_range=self.data_range)
     
 class Sobel_Loss(torch.nn.Module):
@@ -53,8 +49,6 @@ class Sobel_Loss(torch.nn.Module):
         self.Gy = np.array([[1,2,1],[0,0,0],[-1,-2,-1]])
     
     def forward(self, input, target):
-        #print(input.shape)
-        #print(self.Gx.shape)
         
         loss_x = 0
         loss_y = 0
@@ -64,9 +58,6 @@ class Sobel_Loss(torch.nn.Module):
         
         loss_x /= input.shape[0]
         loss_y /= input.shape[0]
-        #return torch.tensor((loss_x + loss_y) / 2 )
-        #print("In Sobel Loss")
-        #print(type((loss_x + loss_y) / 2))
         return (loss_x + loss_y) / 2
     
 class CombinedLoss(torch.nn.Module):
@@ -227,8 +218,6 @@ class WeightedCombinedLoss(torch.nn.Module):
         :params: target: torch tensor
         :returns: weighted loss
         """
-        #print("in loss calculation")
-        #print(input.shape)
         if weight==None:
             loss_lst = [loss(input, target) * wght for loss, wght in zip(self.loss_lst, self.weights)]
             # return sum

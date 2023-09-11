@@ -21,21 +21,7 @@ def im_scaling(img_in, img_ref, step=4):
     b = img_ref[idx].reshape(-1,1)
     A = np.hstack((img_in[idx].reshape(-1,1), np.ones_like(b)))
     fctr = np.linalg.lstsq(A, b, rcond=None)[0]
-    #print("im_scaling factors:")
-    #print(fctr[0], fctr[1])
     return (img_in * fctr[0] + fctr[1]).astype(idtype)
-
-def im_scaling_mask(img_in, img_ref, mask):
-    masked_img_in  = img_in[mask>0]
-    masked_img_ref = img_ref[mask>0]
-    b = masked_img_ref.reshape(-1,1)
-    A = np.hstack((masked_img_in.reshape(-1,1), np.ones_like(b)))
-    fctr = np.linalg.lstsq(A, b, rcond=None)[0]
-    scaled_img_in = img_in * fctr[0] + fctr[1]
-    #print("im_scaling_mask factors:")
-    #print("ref img mean:",np.mean(img_ref[mask>0]))
-    #print("pred img mean:" , np.mean(scaled_img_in[mask>0]))
-    return scaled_img_in
 
 def im_scaling_slice(img_in, img_ref, mask=None):
     
@@ -177,7 +163,7 @@ def calculate_ssim(img1, img2, crop_border, input_order='HWC', test_y_channel=Fa
         img2 = to_y_channel(img2)
 
     ssims = []
-    #print(img1.shape)
+
     if img1.ndim==3:
         for i in range(img1.shape[2]):
             ssims.append(_ssim(img1[..., i], img2[..., i]))
@@ -224,8 +210,6 @@ def reorder_image(img, input_order='HWC'):
     if input_order == 'CHW':
         img = img.transpose(1, 2, 0)
     return img
-# before are from Subtle Intern
-# below are defined by sqy
 
 # calculate the ssim for the 3d image slice by slice
 def cal_ssim_cases(pred_dset, gt_dset, slice_axis=-1):
@@ -244,8 +228,7 @@ def cal_ssim_cases(pred_dset, gt_dset, slice_axis=-1):
     gt_data   = gt_data * 255
     
     SSIM_pred_lst = []    
-    #print("in cal_ssim_cases")
-    #print(pred_data.shape)
+
     for i in range(pred_data.shape[slice_axis]):
         if slice_axis==0:
             SSIM_pred_lst.append(calculate_ssim(pred_data[i].squeeze(),gt_data[i].squeeze(),crop_border=0))

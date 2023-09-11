@@ -5,11 +5,12 @@ import torch
 import pytorch_lightning as pl
 from tqdm import tqdm
 import nibabel as nib
+import glob
 
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICE"] = "0"
 GPU_DEVICE = [0]
-# some global model parameters
+
 #############################################
 MODEL_TYPE = 'SWINIR'
 SLICE_NUM  = 3
@@ -43,14 +44,10 @@ elif MODEL_TYPE == 'SWINIR':
 elif MODEL_TYPE == 'DWAN':
     from Models.DWAN import DWAN_network as target_model 
     MODEL_PARAMS = {"img_channel": SLICE_NUM}
-elif MODEL_TYPE == 'EDSR_3D':
-    from Models.network_edsr_3d import edsr_3D as target_model
-    MODEL_PARAMS = {"layers":10, "features":64}
+
 elif MODEL_TYPE == 'UNETR':
     from Models.unetr import UNETR_mini as target_model
-    MODEL_PARAMS = {"img_shape":IMAGE_SHAPE, "input_dim":1, 
-                    "output_dim":1, "embed_dim":192, "patch_size":16, 
-                    "num_heads":6, "dropout":0.1}
+    MODEL_PARAMS = {"img_shape":IMAGE_SHAPE, }
 elif MODEL_TYPE == 'TransUnet':
     from Models.vit_seg_modeling import VisionTransformer_restore as target_model
     import Models.vit_seg_configs as configs
@@ -167,8 +164,7 @@ class ModelPredictor(object):
         :returns: predicted image
         """
         return self.get_prediction(input_dicom_path)
-
-            
+           
 from src.image_processing import NormalizePostProcess
 norm_post_proc = NormalizePostProcess(use_M0 = USE_M0)
 predictor = ModelPredictor(
@@ -180,24 +176,17 @@ predictor = ModelPredictor(
     img_shape = IMAGE_SHAPE,
     batch_size = 4,
 )
-print('predictor initialized')
 
-import glob
-from tqdm import tqdm
-import nibabel as nib
 from src.evaluation_metrics import im_scaling_slice
 study_pre = 'Example'
 os.makedirs(os.path.join(tmp_output_path,study_pre),exist_ok=True)
-# Here to change from GE/Siemens_intersite/Philips
 input_data_path = "./Data/EvaluationData"
 case_list = [os.path.basename(x) for x in glob.glob(input_data_path + "/*")]
-print(case_list)
-# number of subjects
-for case in tqdm(case_list): ## subject level
-    print(case)
+
+for case in tqdm(case_list): 
     input_data = [os.path.basename(x) for x in glob.glob(input_data_path + '/' + case + "/input*.nii")]
     os.makedirs(os.path.join(tmp_output_path,study_pre,case),exist_ok=True)
-    for data in input_data : # make sure to change according to the real data case
+    for data in input_data : 
         
         img = nib.load(os.path.join(input_data_path,case,data))    
         input_img = np.array(img.get_fdata())
@@ -208,8 +197,6 @@ for case in tqdm(case_list): ## subject level
         mask_img = nib.load(mask_path).get_fdata()
         mask_img[mask_img>0]=1
         mask_mtx = np.transpose(mask_img,(2,0,1))
-
-        input_mtx = input_mtx
 
         if USE_M0:
             M0_path = os.path.join(input_data_path,case,'M0.nii')
@@ -227,13 +214,10 @@ for case in tqdm(case_list): ## subject level
                 input_mtx,
             )
 
-
         result_mtx = np.squeeze(result_mtx)
         result_mtx = im_scaling_slice(result_mtx, input_mtx, mask_mtx)
         result_img = np.transpose(result_mtx,(1,2,0))
-
-        # apply mask        
-        masked_img = result_img * mask_img[:,:,:]        
+      
         # save input and prediction images
         ni_img = nib.Nifti1Image(result_img, affine=nib.load(mask_path).affine)
         nib.save(ni_img, os.path.join(tmp_output_path,study_pre,case+'/pred_'+data))

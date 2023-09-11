@@ -3,7 +3,6 @@ import os
 import h5py
 import yaml
 import random
-
 import numpy as np
 import pandas as pd
 import torch
@@ -11,11 +10,11 @@ import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint, RichProgressBar
 from pytorch_lightning.loggers import TensorBoardLogger
 
-# define which GPU we want to use
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 GPU_DEVICE = [1]
 N_WORKERS = 24 
+
 # define hyperparameters
 SLICE_NUM = 3
 PATCH_SIZE = (48, 48)
@@ -41,23 +40,18 @@ torch.manual_seed(SEED)
 torch.cuda.manual_seed_all(SEED)
 
 # define data augmentation
-# set up train and validation steps
-from src.image_processing import PatchPairedImage, AugmentRandomRotation, AugmentHorizonalFlip
 
-# preproc and sim hyperparams
+from src.image_processing import PatchPairedImage, AugmentRandomRotation, AugmentHorizonalFlip
 AUG_ROT_RANGE = (-60, 60)
 train_preproc_lst = [
     AugmentRandomRotation(AUG_ROT_RANGE),
     AugmentHorizonalFlip(),        
     PatchPairedImage(patch_size=PATCH_SIZE,apply_before_ksp = True),
 ]
-
 valid_preproc_lst = [PatchPairedImage(patch_size=PATCH_SIZE,apply_before_ksp = True)]
 from src.data_utils import LOFT4DMRData
 
 ############### data loading #############
-# First define UH2 data
-
 data_path = './Data/ExampleTrainData/Example_train_valid_data.hdf5'
 data_conn = h5py.File(data_path,"r")
 csv_path = './Data/ExampleTrainData/Example_train_valid_data.csv'
@@ -67,11 +61,9 @@ data_splits = {
     "validation": csv[csv["train_val_test"] == "VALID"]["subject_ID"].tolist(),
 }
 data = LOFT4DMRData(data_conn, data_splits, prop_cull=[0.1,0.1],slice_axis=-2, time_axis=-1, remove_spike=True)
-train_data = data.generate_dataset_multislice("train", preproc_lst=train_preproc_lst, input_name = "input/data_input", target_name = "target_ave/dset_target_ave",slice_num=SLICE_NUM, global_norm = True,  use_M0 = USE_M0)
-valid_data = data.generate_dataset_multislice("validation", preproc_lst = valid_preproc_lst, input_name = "input/data_input", target_name = "target_ave/dset_target_ave",  slice_num=SLICE_NUM, global_norm = True, use_M0 = USE_M0) 
+train_data = data.generate_dataset_multislice("train", preproc_lst=train_preproc_lst, input_name = "input/data_input", target_name = "target_ave/dset_target_ave",slice_num=SLICE_NUM,  use_M0 = USE_M0)
+valid_data = data.generate_dataset_multislice("validation", preproc_lst = valid_preproc_lst, input_name = "input/data_input", target_name = "target_ave/dset_target_ave",  slice_num=SLICE_NUM, use_M0 = USE_M0) 
 
-#print(len(train_data))
-#print(len(valid_data))
 
 # define loss function
 from torch.nn.functional import l1_loss
@@ -111,9 +103,6 @@ elif MODEL_TYPE == 'SWINIR':
 elif MODEL_TYPE == 'DWAN':
     from Models.DWAN import DWAN_network as target_model 
     MODEL_PARAMS = {"img_channel": SLICE_NUM}
-elif MODEL_TYPE == 'EDSR_3D':
-    from Models.network_edsr_3d import edsr_3D as target_model
-    MODEL_PARAMS = {"layers":20, "img_channel":SLICE_NUM}
 elif MODEL_TYPE == 'TransUnet':
     from Models.vit_seg_modeling import VisionTransformer_restore as target_model
     import Models.vit_seg_configs as configs
@@ -175,7 +164,6 @@ class TrainingModule(target_model, pl.LightningModule):
         self.log("val_loss", loss, on_epoch=True, on_step=None)
 
         # log images
-        # pred is in the shape of Nbatch, N_slice, Nx, Ny
         num_channels = input.shape[1]
         if batch_idx % 20 == 0:
             input_img  = input[0,int(num_channels/2),:,:].cpu().numpy().squeeze() 
@@ -190,16 +178,12 @@ class TrainingModule(target_model, pl.LightningModule):
     def training_epoch_end(self, outputs):
         # calculating average loss
         avg_loss = torch.stack([x['loss'] for x in outputs]).mean()
-        
-        # create log dictionary
         self.log("train_loss_epoch", avg_loss, on_epoch=True, on_step = None)
 
     def validation_epoch_end(self, outputs):
         avg_loss = torch.stack(outputs).mean()
         self.log("valid_loss_epoch", avg_loss, on_epoch=True, on_step = None)
         
-
-# model
 if USE_CKPT:
     model = TrainingModule.load_from_checkpoint(
         # set loss
@@ -234,7 +218,6 @@ hyperparam_dict = {
 with open(os.path.join(MODEL_SAVE_PATH, "hyperparams.yaml"), "w") as file:
     yaml.dump(hyperparam_dict, file)
 
-print("callback prep finished")
 last_checkpoint_callback = ModelCheckpoint(
     every_n_epochs=5,
     dirpath=MODEL_SAVE_PATH,
@@ -253,7 +236,7 @@ trainer = pl.Trainer(
         last_checkpoint_callback,
         RichProgressBar(),
     ],
-    check_val_every_n_epoch=1,
+    check_val_every_n_epoch=5,
     logger = logger,
     log_every_n_steps=10,
     auto_lr_find=True,
@@ -261,9 +244,7 @@ trainer = pl.Trainer(
 
 # train
 trainer.fit(
-    # load model
     model=model,
-    # make into data loaders
     train_dataloaders=torch.utils.data.DataLoader(train_data, batch_size=TRAIN_BATCH_SIZE,
         num_workers = N_WORKERS, drop_last=True),
     val_dataloaders=torch.utils.data.DataLoader(valid_data, batch_size=4, drop_last=False),
