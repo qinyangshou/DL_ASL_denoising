@@ -70,9 +70,8 @@ data = LOFT4DMRData(data_conn, data_splits, prop_cull=[0.1,0.1],slice_axis=-2, t
 train_data = data.generate_dataset_multislice("train", preproc_lst=train_preproc_lst, input_name = "input/data_input", target_name = "target_ave/dset_target_ave",slice_num=SLICE_NUM, global_norm = True,  use_M0 = USE_M0)
 valid_data = data.generate_dataset_multislice("validation", preproc_lst = valid_preproc_lst, input_name = "input/data_input", target_name = "target_ave/dset_target_ave",  slice_num=SLICE_NUM, global_norm = True, use_M0 = USE_M0) 
 
-print(len(train_data))
-print(len(valid_data))
-print("all data loaded")
+#print(len(train_data))
+#print(len(valid_data))
 
 # define loss function
 from torch.nn.functional import l1_loss
