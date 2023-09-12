@@ -7,7 +7,8 @@ Shou, Qinyang, Chenyang Zhao, Xingfeng Shao, Kay Jann, Karl Helmer, Hanzhang Lu,
 This repository contains some example training and evaluation data (under ./Data)
 To train a new model: run model_train.py, change the model type and model parameters in the code
 
-The ./Model folder contains a collection of models compared in the paper including: 
+The "./Model" folder contains a collection of models compared in the paper including: 
+
 SwinIR(Liang, Jingyun, et al. "Swinir: Image restoration using swin transformer." Proceedings of the IEEE/CVF international conference on computer vision. 2021.)
 DWAN(Xie, Danfeng, et al. "Denoising arterial spin labeling perfusion MRI with deep machine learning." Magnetic resonance imaging 68 (2020): 95-105.)
 EDSR(Lim, Bee, et al. "Enhanced deep residual networks for single image super-resolution." Proceedings of the IEEE conference on computer vision and pattern recognition workshops. 2017.)
