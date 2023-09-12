@@ -1,4 +1,9 @@
-# Code written by Qinyang Shou: qinyangs@usc.edu
+"""
+Created on September 11th 2023
+@author: Qinyang Shou
+
+"""
+
 import os
 import h5py
 import yaml
