@@ -1,3 +1,9 @@
+"""
+Created on September 11th 2023
+@author: Qinyang Shou
+qinyangs@usc.edu
+"""
+
 import math
 import finufft
 import numpy as np
