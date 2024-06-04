@@ -1,8 +1,11 @@
 # DL_ASL_denoising
+Update 06-04-24:
+LFS is disabled. The data is now uploaded to Google drive:
+https://drive.google.com/drive/folders/1TjVdJpD6zLgkhZDFKy1tQ70hy1_0hWeg?usp=drive_link
 
 This is the code for the following paper: 
 
-Shou, Qinyang, Chenyang Zhao, Xingfeng Shao, Kay Jann, Karl Helmer, Hanzhang Lu, and Danny JJ Wang. "Transformer based deep learning denoising of single and multi-delay 3D Arterial Spin Labeling." medRxiv (2023): 2023-04.
+Shou, Qinyang, Chenyang Zhao, Xingfeng Shao, Kay Jann, Hosung Kim, Karl G. Helmer, Hanzhang Lu, and Danny JJ Wang. "Transformer‐based deep learning denoising of single and multi‐delay 3D arterial spin labeling." Magnetic resonance in medicine 91, no. 2 (2024): 803-818.
 
 This repository contains some example training and evaluation data (under ./Data)
 To train a new model: run model_train.py, change the model type and model parameters in the code
